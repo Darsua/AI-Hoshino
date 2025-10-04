@@ -1,0 +1,62 @@
+{
+  "kelas_mata_kuliah": [
+    {
+      "kode": "IF3071_K01",
+      "jumlah_mahasiswa": 60,
+      "sks": 3
+    },
+    {
+      "kode": "IF3130_K01",
+      "jumlah_mahasiswa": 45,
+      "sks": 2
+    },
+    {
+      "kode": "IF3110_K02",
+      "jumlah_mahasiswa": 70,
+      "sks": 3
+    },
+    {
+      "kode": "IF3140_K01",
+      "jumlah_mahasiswa": 55,
+      "sks": 2
+    }
+  ],
+
+  "ruangan": [
+    {
+      "kode": "7609",
+      "kuota": 60
+    },
+    {
+      "kode": "7606",
+      "kuota": 80
+    },
+    {
+      "kode": "multimedia",
+      "kuota": 40
+    }
+  ],
+
+  "mahasiswa": [
+    {
+      "nim": "13523601",
+      "daftar_mk": ["IF3071_K01", "IF3130_K01"],
+      "prioritas": [1, 2]
+    },
+    {
+      "nim": "135236641",
+      "daftar_mk": ["IF3110_K02", "IF3130_K01"],
+      "prioritas": [1, 2]
+    },
+    {
+      "nim": "13523669",
+      "daftar_mk": ["IF3140_K01", "IF3071_K01"],
+      "prioritas": [1, 2]
+    },
+    {
+      "nim": "13523600",
+      "daftar_mk": ["IF3110_K02"],
+      "prioritas": [1]
+    }
+  ]
+}
