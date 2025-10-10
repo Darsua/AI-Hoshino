@@ -5,12 +5,22 @@ arg_parser.add_argument('input_file', type=str, help='Path to the input JSON fil
 args = arg_parser.parse_args()
 
 from parser import load_input
-classes, rooms, students = load_input(args.input_file)
+try:
+    classes, rooms, students = load_input(args.input_file)
+except (FileNotFoundError, ValueError) as e:
+    print(e)
+    exit(1)
 
-# Test print
-for cls in classes:
-    print(f"Class Code: {cls.code}, Students: {cls.students}, Credits: {cls.credits}")# 
-for room in rooms:
-    print(f"Room Code: {room.code}, Capacity: {room.capacity}")
-for student in students:
-    print(f"Student ID: {student.id}, Classes: {student.classes}")
+# DEBUG: Test print
+for cls_code, cls in classes.items():
+    print(f"Class {cls_code}: {cls.studentCount} students, {cls.credits} credits")
+    i = 1
+    for student in cls.students:
+        print(f" {i}. {student.id}: Priority = {student.classes.index(cls_code) + 1}")
+        i = i + 1
+    print()
+for room_code, room in rooms.items():
+    print(f"Room {room_code}: Capacity {room.capacity}")
+print()
+for student_id, student in students.items():
+    print(f"Student {student_id}: Classes {student.classes}")
