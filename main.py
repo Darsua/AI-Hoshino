@@ -24,3 +24,8 @@ for room_code, room in rooms.items():
 print()
 for student_id, student in students.items():
     print(f"Student {student_id}: Classes {student.classes}")
+
+from state import State
+state = State()
+state.random_fill(classes, rooms)
+print(state)
