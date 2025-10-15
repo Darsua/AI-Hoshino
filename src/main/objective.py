@@ -1,4 +1,4 @@
-from collections import defaultdict
+from src.main.state import State
 
 class ObjectiveFunction:
     PRIORITY_WEIGHTS = {
@@ -11,7 +11,7 @@ class ObjectiveFunction:
         self.student_conflict = student_conflict
         self.room_conflict = room_conflict
         self.capacity = capacity
-    
+
     def calculate(self, state) -> float:
         if state._objective_value is not None:
             return state._objective_value

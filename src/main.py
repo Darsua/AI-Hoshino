@@ -5,6 +5,8 @@ import os
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, project_root)
 
+from src.main.objective import ObjectiveFunction
+
 import argparse
 
 def main():
@@ -48,6 +50,7 @@ def main():
         state = State()
         state.random_fill(classes, rooms)
         print(state)
+        print(ObjectiveFunction().calculate(state))
 
 if __name__ == "__main__":
     main()

@@ -56,7 +56,7 @@ class State:
 
         return result
 
-    def add_meeting(self, meeting: Allocation):
+    def add_meeting(self, meeting: 'State.Allocation'):
         self.meetings.append(meeting)
 
     def random_fill(self, classes: dict[str, CourseClass], rooms: dict[str, Room]):
