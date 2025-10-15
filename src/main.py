@@ -6,6 +6,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, project_root)
 
 from src.main.objective import ObjectiveFunction
+from src.algorithms.genetic import run_genetic_algorithm
 
 import argparse
 
@@ -13,6 +14,9 @@ def main():
     arg_parser = argparse.ArgumentParser(description="AI-Hoshino: A scheduling problem solver")
     arg_parser.add_argument('input_file', type=str, nargs='?', default=None, help='Path to the input JSON file (required for CLI mode)')
     arg_parser.add_argument('--gui', action='store_true', help='Launch the graphical user interface')
+    arg_parser.add_argument('--genetic', action='store_true', help='Use genetic algorithm for optimization')
+    arg_parser.add_argument('--generations', type=int, default=100, help='Number of generations for genetic algorithm (default: 100)')
+    arg_parser.add_argument('--population', type=int, default=50, help='Population size for genetic algorithm (default: 50)')
     args = arg_parser.parse_args()
 
     if args.gui:
@@ -46,11 +50,24 @@ def main():
         for student_id, student in students.items():
             print(f"Student {student_id}: Classes {student.classes}")
 
-        from src.main.state import State
-        state = State()
-        state.random_fill(classes, rooms)
-        print(state)
-        print(ObjectiveFunction().calculate(state))
+        if args.genetic:
+            print("\nRunning Genetic Algorithm optimization...")
+            best_state = run_genetic_algorithm(
+                classes,
+                rooms,
+                population_size=args.population,
+                generations=args.generations
+            )
+            print("\nBest schedule found:")
+            print(best_state)
+            print(f"Final penalty: {ObjectiveFunction().calculate(best_state)}")
+        else:
+            from src.main.state import State
+            state = State()
+            state.random_fill(classes, rooms)
+            print("Random schedule:")
+            print(state)
+            print(f"Random schedule penalty: {ObjectiveFunction().calculate(state)}")
 
 if __name__ == "__main__":
     main()

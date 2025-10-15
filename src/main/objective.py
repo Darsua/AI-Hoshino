@@ -58,14 +58,14 @@ class ObjectiveFunction:
                             penalty += overlap_end - overlap_start
 
                             # DEBUG: Print who is conflicting and which classes at what time, along with the penalty added
-                            print(f"Conflict: for student {student_id} between {meeting1.course_class.code} and {meeting2.course_class.code} from {overlap_start} to {overlap_end}, adding penalty {overlap_end - overlap_start}")
+                            # print(f"Conflict: for student {student_id} between {meeting1.course_class.code} and {meeting2.course_class.code} from {overlap_start} to {overlap_end}, adding penalty {overlap_end - overlap_start}")
 
         return penalty
 
 
     def _calculate_room_conflict_penalty(self, state) -> float:
         penalty = 0.0
-        
+
         # Group meetings by (room, day, hour)
         room_time_meetings = defaultdict(list)
         for meeting in state.meetings:
@@ -109,7 +109,7 @@ class ObjectiveFunction:
                 penalty += hour_penalty
 
         return penalty
-    
+
     def _calculate_capacity_penalty(self, state):
         penalty = 0.0
         for meeting in state.meetings:
@@ -122,7 +122,7 @@ class ObjectiveFunction:
                 # print()
                 # print(room_capacity)
                 # print()
-                overflow = student_count - room_capacity 
+                overflow = student_count - room_capacity
                 duration = meeting.time_slot.duration()
                 # print(overflow, duration)
                 penalty += overflow *duration
