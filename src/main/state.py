@@ -2,14 +2,12 @@ import random
 
 from src.models import TimeSlot, CourseClass, Room
 
-class Allocation:
-    def __init__(self, course_class: CourseClass, time_slot: TimeSlot, room: Room):
-        self.course_class = course_class
-        self.time_slot = time_slot
-        self.room = room
-
-# State
 class State:
+    class Allocation:
+        def __init__(self, course_class: CourseClass, time_slot: TimeSlot, room: Room):
+            self.course_class = course_class
+            self.time_slot = time_slot
+            self.room = room
 
     def __init__(self):
         self.meetings = []
@@ -73,6 +71,6 @@ class State:
                 end_hour = start_hour + duration
                 time_slot = TimeSlot(day, start_hour, end_hour)
                 room = random.choice(room_list)
-                meeting = Allocation(cls, time_slot, room)
+                meeting = self.Allocation(cls, time_slot, room)
                 self.meetings.append(meeting)
                 hours_to_allocate -= duration
