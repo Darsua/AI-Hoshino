@@ -1,5 +1,5 @@
 import json
-from src.main.state import CourseClass, Room, Student
+from src.models import CourseClass, Room, Student
 
 class Parser:
     def __init__(self, json_file_path: str):
