@@ -4,7 +4,7 @@ arg_parser = argparse.ArgumentParser(description="AI-Hoshino: A scheduling probl
 arg_parser.add_argument('input_file', type=str, help='Path to the input JSON file')
 args = arg_parser.parse_args()
 
-from parser import load_input
+from src.utils.parser import load_input
 try:
     classes, rooms, students = load_input(args.input_file)
 except (FileNotFoundError, ValueError) as e:
@@ -25,7 +25,7 @@ print()
 for student_id, student in students.items():
     print(f"Student {student_id}: Classes {student.classes}")
 
-from state import State
+from src.main.state import State
 state = State()
 state.random_fill(classes, rooms)
 print(state)
