@@ -8,48 +8,56 @@ class Allocation:
         self.time_slot = time_slot
         self.room = room
 
-
 # State
 class State:
-    # def __init__(self):
-    #     self.meetings = []
-
 
     def __init__(self):
         self.meetings = []
 
-    # def __str__(self):
-    #     result = "   "
-    #     for day in TimeSlot.Time.Day:
-    #         result += f"{day.name:10} "
-    #     result += "\n"
+    def __str__(self):
+        # Create header
+        result = "   "
+        for day in TimeSlot.Day:
+            result += f"{day.name:16} "
+        result += "\n"
 
-    #     # Find the maximum number of classes in any time slot to determine row height
-    #     max_classes_per_slot = 0
-    #     for j in range(18-7):
-    #         for i in range(7):
-    #             max_classes_per_slot = max(max_classes_per_slot, len(self.matrix[i][j]))
+        # Create a grid to hold meetings for each time slot
+        grid = {}
+        for day in range(5):  # Monday to Friday (0-4)
+            for hour in range(7, 18):  # 7 AM to 5 PM
+                grid[(day, hour)] = []
 
-    #     for j in range(18-7):
-    #         # We might need multiple lines if there are multiple classes
-    #         lines_needed = max(1, max(len(self.matrix[i][j]) for i in range(7)))
+        # Populate grid with meetings
+        for meeting in self.meetings:
+            day_idx = meeting.time_slot.day.value
+            for hour in range(meeting.time_slot.start_hour, meeting.time_slot.end_hour):
+                if (day_idx, hour) in grid:
+                    display_text = f"{meeting.course_class.code}({meeting.room.code})"
+                    grid[(day_idx, hour)].append(display_text)
 
-    #         for line_idx in range(lines_needed):
-    #             if line_idx == 0:
-    #                 result += f"{j+7:2} "
-    #             else:
-    #                 result += "   "
+        # Generate output for each hour
+        for hour in range(7, 18):
+            # Find max classes in this hour across all days
+            max_classes = max(len(grid[(day, hour)]) for day in range(5))
+            lines_needed = max(1, max_classes)
 
-    #             for i in range(7):
-    #                 cell_entries = self.matrix[i][j]
-    #                 if line_idx < len(cell_entries):
-    #                     cell_content = cell_entries[line_idx]
-    #                 else:
-    #                     cell_content = ""
-    #                 result += f"{cell_content:10} "
-    #             result += "\n"
-    #     return result
-    
+            for line_idx in range(lines_needed):
+                if line_idx == 0:
+                    result += f"{hour:2} "
+                else:
+                    result += "   "
+
+                for day in range(5):
+                    cell_entries = grid[(day, hour)]
+                    if line_idx < len(cell_entries):
+                        cell_content = cell_entries[line_idx]
+                    else:
+                        cell_content = ""
+                    result += f"{cell_content:16} "
+                result += "\n"
+
+        return result
+
     def add_meeting(self, meeting: Allocation):
         self.meetings.append(meeting)
 
