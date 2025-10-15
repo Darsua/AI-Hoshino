@@ -15,43 +15,41 @@ class State:
     # def __init__(self):
     #     self.meetings = []
 
-    
 
     def __init__(self):
-        self.matrix = [[list[str]() for _ in range(18-7, 0, -1)] for _ in range(7)] # Matrix that represents how many hours are free from a given time
-        self.allocations = dict[str, self.Allocation]()
+        self.meetings = []
 
-    def __str__(self):
-        result = "   "
-        for day in TimeSlot.Time.Day:
-            result += f"{day.name:10} "
-        result += "\n"
+    # def __str__(self):
+    #     result = "   "
+    #     for day in TimeSlot.Time.Day:
+    #         result += f"{day.name:10} "
+    #     result += "\n"
 
-        # Find the maximum number of classes in any time slot to determine row height
-        max_classes_per_slot = 0
-        for j in range(18-7):
-            for i in range(7):
-                max_classes_per_slot = max(max_classes_per_slot, len(self.matrix[i][j]))
+    #     # Find the maximum number of classes in any time slot to determine row height
+    #     max_classes_per_slot = 0
+    #     for j in range(18-7):
+    #         for i in range(7):
+    #             max_classes_per_slot = max(max_classes_per_slot, len(self.matrix[i][j]))
 
-        for j in range(18-7):
-            # We might need multiple lines if there are multiple classes
-            lines_needed = max(1, max(len(self.matrix[i][j]) for i in range(7)))
+    #     for j in range(18-7):
+    #         # We might need multiple lines if there are multiple classes
+    #         lines_needed = max(1, max(len(self.matrix[i][j]) for i in range(7)))
 
-            for line_idx in range(lines_needed):
-                if line_idx == 0:
-                    result += f"{j+7:2} "
-                else:
-                    result += "   "
+    #         for line_idx in range(lines_needed):
+    #             if line_idx == 0:
+    #                 result += f"{j+7:2} "
+    #             else:
+    #                 result += "   "
 
-                for i in range(7):
-                    cell_entries = self.matrix[i][j]
-                    if line_idx < len(cell_entries):
-                        cell_content = cell_entries[line_idx]
-                    else:
-                        cell_content = ""
-                    result += f"{cell_content:10} "
-                result += "\n"
-        return result
+    #             for i in range(7):
+    #                 cell_entries = self.matrix[i][j]
+    #                 if line_idx < len(cell_entries):
+    #                     cell_content = cell_entries[line_idx]
+    #                 else:
+    #                     cell_content = ""
+    #                 result += f"{cell_content:10} "
+    #             result += "\n"
+    #     return result
     
     def add_meeting(self, meeting: Allocation):
         self.meetings.append(meeting)
