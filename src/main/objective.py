@@ -16,11 +16,11 @@ class ObjectiveFunction:
         if state._objective_value is not None:
             return state._objective_value
         total_penalty = 0.0
-        if self.student_conflict:
-            total_penalty += self._calculate_student_conflict_penalty(state)
-        if self.room_conflict:
-            total_penalty += self._calculate_room_conflict_penalty(state)
-        if self.capacity:
-            total_penalty += self._calculate_capacity_penalty(state)
+        # if self.student_conflict:
+        #     total_penalty += self._calculate_student_conflict_penalty(state)
+        # if self.room_conflict:
+        #     total_penalty += self._calculate_room_conflict_penalty(state)
+        # if self.capacity:
+        #     total_penalty += self._calculate_capacity_penalty(state)
         state._objective_value = total_penalty
         return total_penalty
