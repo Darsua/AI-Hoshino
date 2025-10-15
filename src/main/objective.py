@@ -59,3 +59,21 @@ class ObjectiveFunction:
                             print(f"Conflict: for student {student_id} between {meeting1.course_class.code} and {meeting2.course_class.code} from {overlap_start} to {overlap_end}, adding penalty {overlap_end - overlap_start}")
 
         return penalty
+    
+    def _calculate_capacity_penalty(self, state):
+        penalty = 0.0
+        for meeting in state.meetings:
+            student_count = meeting.course_class.studentCount
+            room_capacity = meeting.room.capacity
+            if student_count > room_capacity:
+                # print(meeting.course_class.code, meeting.room.code, meeting.time_slot.day.name, meeting.time_slot.start_hour, meeting.time_slot.end_hour)
+                # print()
+                # print(student_count)
+                # print()
+                # print(room_capacity)
+                # print()
+                overflow = student_count - room_capacity 
+                duration = meeting.time_slot.duration()
+                # print(overflow, duration)
+                penalty += overflow *duration
+        return penalty
