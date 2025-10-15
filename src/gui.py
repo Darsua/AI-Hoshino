@@ -1,6 +1,5 @@
 import tkinter as tk
 from tkinter import filedialog, ttk
-import json
 from .utils.parser import load_input
 from .main.state import State
 
@@ -21,7 +20,7 @@ class SchedulerGUI(tk.Tk):
         self.classes = {}
         self.rooms = {}
         self.students = {}
-        self.state = None
+        self.state = State()
 
         self.create_widgets()
         self.apply_theme()
