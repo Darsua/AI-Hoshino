@@ -1,15 +1,13 @@
 from enum import Enum
-
-class Day(Enum):
-            MONDAY = 0
-            TUESDAY = 1
-            WEDNESDAY = 2
-            THURSDAY = 3
-            FRIDAY = 4
-            SATURDAY = 5
-            SUNDAY = 6
             
 class TimeSlot:
+    class Day(Enum):
+        MONDAY = 0
+        TUESDAY = 1
+        WEDNESDAY = 2
+        THURSDAY = 3
+        FRIDAY = 4
+    
     def __init__(self, day: Day, start_hour: int, end_hour: int):
         self.day = day
         self.start_hour = start_hour

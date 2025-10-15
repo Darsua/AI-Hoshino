@@ -1,7 +1,6 @@
-from enum import Enum
 import random
 
-from src.models import TimeSlot, CourseClass,Room, Day
+from src.models import TimeSlot, CourseClass, Room
 
 class Allocation:
     def __init__(self, course_class: CourseClass, time_slot: TimeSlot, room: Room):
@@ -60,7 +59,7 @@ class State:
         for cls in classes.values():
             hours_to_allocate = cls.credits
             while hours_to_allocate > 0:
-                day = Day(random.randint(0, 6))
+                day = TimeSlot.Day(random.randint(0, 4))
                 start_hour = random.randint(7, 17)
                 duration = random.randint(1, min(3, hours_to_allocate, 18 - start_hour))
                 end_hour = start_hour + duration
