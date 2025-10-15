@@ -1,0 +1,252 @@
+{
+  "kelas_mata_kuliah": [
+    {
+      "kode": "CS101_A",
+      "jumlah_mahasiswa": 15,
+      "sks": 3
+    },
+    {
+      "kode": "CS102_A",
+      "jumlah_mahasiswa": 8,
+      "sks": 2
+    },
+    {
+      "kode": "CS201_A",
+      "jumlah_mahasiswa": 11,
+      "sks": 3
+    },
+    {
+      "kode": "CS202_A",
+      "jumlah_mahasiswa": 8,
+      "sks": 2
+    },
+    {
+      "kode": "CS301_A",
+      "jumlah_mahasiswa": 4,
+      "sks": 4
+    },
+    {
+      "kode": "MATH101_A",
+      "jumlah_mahasiswa": 12,
+      "sks": 3
+    },
+    {
+      "kode": "MATH201_A",
+      "jumlah_mahasiswa": 8,
+      "sks": 3
+    },
+    {
+      "kode": "ENG101_A",
+      "jumlah_mahasiswa": 12,
+      "sks": 2
+    }
+  ],
+  "ruangan": [
+    {
+      "kode": "A101",
+      "kuota": 50
+    },
+    {
+      "kode": "A102",
+      "kuota": 45
+    },
+    {
+      "kode": "B201",
+      "kuota": 35
+    },
+    {
+      "kode": "B202",
+      "kuota": 30
+    },
+    {
+      "kode": "C301",
+      "kuota": 25
+    },
+    {
+      "kode": "LAB1",
+      "kuota": 20
+    }
+  ],
+  "mahasiswa": [
+    {
+      "nim": "2021001",
+      "daftar_mk": ["CS101_A", "MATH101_A", "ENG101_A"],
+      "prioritas": [1, 2, 3]
+    },
+    {
+      "nim": "2021002",
+      "daftar_mk": ["CS101_A", "MATH101_A"],
+      "prioritas": [1, 2]
+    },
+    {
+      "nim": "2021003",
+      "daftar_mk": ["CS102_A", "CS101_A", "ENG101_A"],
+      "prioritas": [1, 2, 3]
+    },
+    {
+      "nim": "2021004",
+      "daftar_mk": ["MATH101_A", "ENG101_A"],
+      "prioritas": [1, 2]
+    },
+    {
+      "nim": "2021005",
+      "daftar_mk": ["CS101_A", "CS102_A", "MATH101_A"],
+      "prioritas": [1, 2, 3]
+    },
+    {
+      "nim": "2022001",
+      "daftar_mk": ["CS201_A", "CS202_A", "MATH201_A"],
+      "prioritas": [1, 2, 3]
+    },
+    {
+      "nim": "2022002",
+      "daftar_mk": ["CS201_A", "MATH201_A"],
+      "prioritas": [1, 2]
+    },
+    {
+      "nim": "2022003",
+      "daftar_mk": ["CS202_A", "CS201_A"],
+      "prioritas": [1, 2]
+    },
+    {
+      "nim": "2022004",
+      "daftar_mk": ["MATH201_A", "CS201_A", "CS202_A"],
+      "prioritas": [1, 2, 3]
+    },
+    {
+      "nim": "2022005",
+      "daftar_mk": ["CS201_A"],
+      "prioritas": [1]
+    },
+    {
+      "nim": "2023001",
+      "daftar_mk": ["CS301_A", "CS201_A"],
+      "prioritas": [1, 2]
+    },
+    {
+      "nim": "2023002",
+      "daftar_mk": ["CS301_A"],
+      "prioritas": [1]
+    },
+    {
+      "nim": "2021006",
+      "daftar_mk": ["CS101_A", "MATH101_A", "ENG101_A"],
+      "prioritas": [1, 2, 3]
+    },
+    {
+      "nim": "2021007",
+      "daftar_mk": ["CS102_A", "ENG101_A"],
+      "prioritas": [1, 2]
+    },
+    {
+      "nim": "2021008",
+      "daftar_mk": ["MATH101_A", "CS101_A"],
+      "prioritas": [1, 2]
+    },
+    {
+      "nim": "2021009",
+      "daftar_mk": ["ENG101_A", "CS101_A", "CS102_A"],
+      "prioritas": [1, 2, 3]
+    },
+    {
+      "nim": "2021010",
+      "daftar_mk": ["CS101_A"],
+      "prioritas": [1]
+    },
+    {
+      "nim": "2022006",
+      "daftar_mk": ["CS201_A", "CS202_A"],
+      "prioritas": [1, 2]
+    },
+    {
+      "nim": "2022007",
+      "daftar_mk": ["MATH201_A", "CS202_A"],
+      "prioritas": [1, 2]
+    },
+    {
+      "nim": "2022008",
+      "daftar_mk": ["CS201_A", "MATH201_A", "CS202_A"],
+      "prioritas": [1, 2, 3]
+    },
+    {
+      "nim": "2021011",
+      "daftar_mk": ["CS101_A", "MATH101_A"],
+      "prioritas": [1, 2]
+    },
+    {
+      "nim": "2021012",
+      "daftar_mk": ["CS102_A", "MATH101_A", "ENG101_A"],
+      "prioritas": [1, 2, 3]
+    },
+    {
+      "nim": "2021013",
+      "daftar_mk": ["ENG101_A", "MATH101_A"],
+      "prioritas": [1, 2]
+    },
+    {
+      "nim": "2021014",
+      "daftar_mk": ["CS101_A", "CS102_A"],
+      "prioritas": [1, 2]
+    },
+    {
+      "nim": "2021015",
+      "daftar_mk": ["MATH101_A", "ENG101_A", "CS101_A"],
+      "prioritas": [1, 2, 3]
+    },
+    {
+      "nim": "2022009",
+      "daftar_mk": ["CS202_A", "MATH201_A"],
+      "prioritas": [1, 2]
+    },
+    {
+      "nim": "2022010",
+      "daftar_mk": ["CS201_A"],
+      "prioritas": [1]
+    },
+    {
+      "nim": "2023003",
+      "daftar_mk": ["CS301_A", "CS201_A", "MATH201_A"],
+      "prioritas": [1, 2, 3]
+    },
+    {
+      "nim": "2021016",
+      "daftar_mk": ["CS101_A", "ENG101_A"],
+      "prioritas": [1, 2]
+    },
+    {
+      "nim": "2021017",
+      "daftar_mk": ["CS102_A", "CS101_A"],
+      "prioritas": [1, 2]
+    },
+    {
+      "nim": "2021018",
+      "daftar_mk": ["MATH101_A"],
+      "prioritas": [1]
+    },
+    {
+      "nim": "2021019",
+      "daftar_mk": ["ENG101_A", "CS101_A", "MATH101_A"],
+      "prioritas": [1, 2, 3]
+    },
+    {
+      "nim": "2021020",
+      "daftar_mk": ["CS101_A", "CS102_A", "ENG101_A"],
+      "prioritas": [1, 2, 3]
+    },
+    {
+      "nim": "2022011",
+      "daftar_mk": ["CS201_A", "MATH201_A"],
+      "prioritas": [1, 2]
+    },
+    {
+      "nim": "2022012",
+      "daftar_mk": ["CS202_A"],
+      "prioritas": [1]
+    },
+    {
+      "nim": "2023004",
+      "daftar_mk": ["CS301_A"],
+      "prioritas": [1]
+    }
+  ]
+}
