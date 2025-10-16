@@ -1,4 +1,5 @@
 import random
+import copy
 
 from src.models import TimeSlot, CourseClass, Room
 
@@ -74,3 +75,42 @@ class State:
                 meeting = self.Allocation(cls, time_slot, room)
                 self.meetings.append(meeting)
                 hours_to_allocate -= duration
+
+    def get_random_neighbor(self, rooms: dict[str, Room]):
+        neighbor = State()
+        neighbor.meetings = [copy.copy(m) for m in self.meetings]
+
+        if len(neighbor.meetings) < 2:
+            return neighbor
+        if random.random() < 0.5:
+            m1, m2 = random.sample(neighbor.meetings, 2)
+            m1.time_slot, m2.time_slot = m2.time_slot, m1.time_slot
+            m1.room, m2.room = m2.room, m1.room
+        else:
+            meeting_to_change = random.choice(neighbor.meetings)
+            duration = meeting_to_change.time_slot.duration()
+            max_attempts = 100
+            for _ in range(max_attempts):
+                day = TimeSlot.Day(random.randint(0, 4))
+                start_hour = random.randint(7, 18 - duration)
+                end_hour = start_hour + duration
+                new_time_slot = TimeSlot(day, start_hour, end_hour)
+                new_room = random.choice(list(rooms.values()))
+                conflict = False
+                for other_meeting in neighbor.meetings:
+                    if other_meeting != meeting_to_change and \
+                    other_meeting.time_slot.day == day and \
+                    other_meeting.time_slot.overlaps_with(new_time_slot) and \
+                    other_meeting.room == new_room:
+                        conflict = True
+                        break
+
+                if not conflict:
+                    meeting_to_change.time_slot = new_time_slot
+                    meeting_to_change.room = new_room
+                    break
+            
+        return neighbor
+
+    def get_N_random_neighbors(self, N: int, rooms: dict[str, Room]):
+        return [self.get_random_neighbor(rooms) for _ in range(N)]

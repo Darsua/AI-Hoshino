@@ -6,7 +6,8 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, project_root)
 
 from src.main.objective import ObjectiveFunction
-from src.algorithms.genetic import run_genetic_algorithm
+from src.algorithms import run_genetic_algorithm, HillClimbing, SimulatedAnnealing
+from src.main import State
 
 import argparse
 
@@ -22,6 +23,13 @@ def main():
     arg_parser.add_argument('--cooling-rate', type=float, default=0.97, help='Cooling rate for simulated annealing (default: 0.97)')
     arg_parser.add_argument('--max-iterations', type=int, default=5000, help='Maximum iterations for simulated annealing (default: 5000)')
     arg_parser.add_argument('--plot', action='store_true', help='Generate visualization plots (for simulated annealing)')
+    arg_parser.add_argument('--hc', action='store_true', help='Use Hill Climbing algorithm for optimization')
+    arg_parser.add_argument('--hc-variant', type=str, default='steepest_ascent', choices=['stochastic', 'steepest_ascent', 'sideways_move', 'random_restart'], help='Variant of Hill Climbing to use')
+    arg_parser.add_argument('--num-neighbors', type=int, default=10, help='Number of neighbors to check for Steepest Ascent Hill Climbing')
+    arg_parser.add_argument('--max-sideways-moves', type=int, default=100, help='Maximum sideways moves allowed in Hill Climbing')
+    arg_parser.add_argument('--max-restarts', type=int, default=10, help='Maximum restarts for Random Restart Hill Climbing')
+    arg_parser.add_argument('--hc-restart-variant', type=str, default='steepest_ascent', choices=['stochastic', 'steepest_ascent', 'sideways_move'], help='Hill Climbing variant to use within Random Restart')
+
     args = arg_parser.parse_args()
 
     if args.gui:
@@ -118,6 +126,82 @@ def main():
                 sa.plot_results(results)
                 sa.plot_acceptance_probability_detail(results)
                 print("✓ Plots displayed")
+
+        elif args.hc:
+            from src.algorithms.hill_climb import HillClimbing
+            from src.main.state import State
+
+            print("\n" + "=" * 70)
+            print("HILL CLIMBING OPTIMIZATION")
+            print("=" * 70)
+
+            objective_func = ObjectiveFunction(
+                student_conflict=True,
+                room_conflict=True,
+                capacity=True
+            )
+
+            initial_state = State()
+            initial_state.random_fill(classes, rooms)
+            initial_penalty = objective_func.calculate(initial_state)
+            
+            print("Initial State (Random Schedule):")
+            print(initial_state)
+            print(f"Initial Penalty: {initial_penalty:.2f}")
+            print("-" * 70)
+
+            hc = HillClimbing(
+                objective_function=objective_func,
+                rooms=rooms,
+                classes=classes
+            )
+
+            print(f"Configuration:")
+            print(f"  Variant: {args.hc_variant}")
+            print(f"  Max Iterations: {args.max_iterations}")
+            if args.hc_variant == 'steepest_ascent':
+                print(f"  Neighbors to check: {args.num_neighbors}")
+            if args.hc_variant == 'sideways_move':
+                print(f"  Max Sideways Moves: {args.max_sideways_moves}")
+            if args.hc_variant == 'random_restart':
+                print(f"  Max Restarts: {args.max_restarts}")
+                print(f"  Restart Variant: {args.hc_restart_variant}")
+            print()
+
+            best_state, results = hc.solve(
+                initial_state=initial_state,
+                variant=args.hc_variant,
+                max_iterations=args.max_iterations,
+                num_neighbors=args.num_neighbors,
+                max_sideways_moves=args.max_sideways_moves,
+                max_restarts=args.max_restarts,
+                restart_variant=args.hc_restart_variant
+            )
+
+            print("\n" + "=" * 70)
+            print("OPTIMIZATION RESULTS")
+            print("=" * 70)
+            print(f"Initial Penalty:  {initial_penalty:.2f}")
+            print(f"Best Penalty:     {results['best_penalty']:.2f}")
+            print(f"Improvement:      {initial_penalty - results['best_penalty']:.2f} "
+                  f"({(initial_penalty - results['best_penalty']) / initial_penalty * 100:.1f}%)")
+            print(f"Total Iterations: {results['iterations']}")
+            if args.hc_variant == 'random_restart':
+                print(f"Restarts:         {results['restarts']}")
+                print(f"Avg Iter/Restart: {sum(results['iterations_per_restart']) / len(results['iterations_per_restart']):.1f}")
+            if args.hc_variant == 'sideways_move':
+                print(f"Sideways Moves:   {results.get('sideways_moves_taken', 0)}")
+            print(f"Duration:         {results['duration']:.2f} seconds")
+            print("=" * 70)
+
+            print("\nFinal State (Best Schedule Found):")
+            print(best_state)
+
+            if args.plot:
+                print("\nGenerating visualization plots...")
+                hc.plot_results(results)
+                print("✓ Plot displayed")
+
         else:
             from src.main.state import State
             state = State()
