@@ -4,6 +4,7 @@ from src.models import Room, CourseClass
 from src.utils.plotter import plot_results as plot
 import time
 import copy
+import random
 
 class HillClimbing:
     def __init__(self, objective_function: ObjectiveFunction, rooms: dict[str, Room], classes: dict[str, CourseClass]):
@@ -30,8 +31,7 @@ class HillClimbing:
             results["iterations"] = len(history)
             results["history"] = history
         elif variant == 'steepest_ascent':
-            num_neighbors = kwargs.get('num_neighbors', 10)
-            best_state, history = self._steepest_ascent_hc(initial_state, max_iterations, num_neighbors)
+            best_state, history = self._steepest_ascent_hc(initial_state, max_iterations)
             results["iterations"] = len(history)
             results["history"] = history
         elif variant == 'sideways_move':
@@ -80,7 +80,10 @@ class HillClimbing:
         stagnation_count = 0
 
         for i in range(max_iterations):
-            neighbor = current_state.get_random_neighbor(self.rooms)
+            neighbors = current_state.get_all_neighbors(self.rooms)
+            if not neighbors:
+                break
+            neighbor = random.choice(neighbors)
             neighbor_value = self.objective_function.calculate(neighbor)
 
             if neighbor_value < current_value:
@@ -100,7 +103,7 @@ class HillClimbing:
 
         return best_state, history
 
-    def _steepest_ascent_hc(self, initial_state: State, max_iterations: int, num_neighbors: int):
+    def _steepest_ascent_hc(self, initial_state: State, max_iterations: int):
         current_state = initial_state
         current_value = self.objective_function.calculate(current_state)
         best_state = copy.deepcopy(current_state)
@@ -108,7 +111,7 @@ class HillClimbing:
         history = [current_value]
 
         for i in range(max_iterations):
-            neighbors = current_state.get_N_random_neighbors(num_neighbors, self.rooms)
+            neighbors = current_state.get_all_neighbors(self.rooms)
             best_neighbor = None
             best_neighbor_value = float('inf')
             
@@ -144,16 +147,31 @@ class HillClimbing:
         history = [current_value]
 
         for i in range(max_iterations):
-            neighbor = current_state.get_random_neighbor(self.rooms)
-            neighbor_value = self.objective_function.calculate(neighbor)
+            neighbors = current_state.get_all_neighbors(self.rooms)
+            if not neighbors:
+                break
 
-            if neighbor_value < current_value:
-                current_state = neighbor
-                current_value = neighbor_value
+            best_neighbors = []
+            best_neighbor_value = float('inf')
+            for neighbor in neighbors:
+                value = self.objective_function.calculate(neighbor)
+                if value < best_neighbor_value:
+                    best_neighbor_value = value
+                    best_neighbors = [neighbor]
+                elif value == best_neighbor_value:
+                    best_neighbors.append(neighbor)
+
+            chosen = random.choice(best_neighbors) if best_neighbors else None
+            if chosen is None:
+                break
+
+            if best_neighbor_value < current_value:
+                current_state = chosen
+                current_value = best_neighbor_value
                 sideways_moves = 0
                 stagnation_count = 0
-            elif neighbor_value == current_value and sideways_moves < max_sideways_moves:
-                current_state = neighbor
+            elif best_neighbor_value == current_value and sideways_moves < max_sideways_moves:
+                current_state = chosen
                 sideways_moves += 1
                 stagnation_count = 0
             else:
@@ -187,8 +205,7 @@ class HillClimbing:
             if restart_variant == 'stochastic':
                 best_state, history = self._stochastic_hc(initial_state, max_iterations)
             elif restart_variant == 'steepest_ascent':
-                num_neighbors = kwargs.get('num_neighbors', 10)
-                best_state, history = self._steepest_ascent_hc(initial_state, max_iterations, num_neighbors)
+                best_state, history = self._steepest_ascent_hc(initial_state, max_iterations)
             elif restart_variant == 'sideways_move':
                 max_sideways_moves = kwargs.get('max_sideways_moves', 100)
                 best_state, history, _ = self._sideways_move_hc(initial_state, max_iterations, max_sideways_moves)

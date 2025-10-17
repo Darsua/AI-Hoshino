@@ -76,41 +76,57 @@ class State:
                 self.meetings.append(meeting)
                 hours_to_allocate -= duration
 
-    def get_random_neighbor(self, rooms: dict[str, Room]):
-        neighbor = State()
-        neighbor.meetings = [copy.copy(m) for m in self.meetings]
+    
+    def get_all_neighbors(self, rooms: dict[str, Room]):
+        neighbors = []
 
-        if len(neighbor.meetings) < 2:
-            return neighbor
-        if random.random() < 0.5:
-            m1, m2 = random.sample(neighbor.meetings, 2)
-            m1.time_slot, m2.time_slot = m2.time_slot, m1.time_slot
-            m1.room, m2.room = m2.room, m1.room
-        else:
-            meeting_to_change = random.choice(neighbor.meetings)
-            duration = meeting_to_change.time_slot.duration()
-            max_attempts = 100
-            for _ in range(max_attempts):
-                day = TimeSlot.Day(random.randint(0, 4))
-                start_hour = random.randint(7, 18 - duration)
-                end_hour = start_hour + duration
-                new_time_slot = TimeSlot(day, start_hour, end_hour)
-                new_room = random.choice(list(rooms.values()))
-                conflict = False
-                for other_meeting in neighbor.meetings:
-                    if other_meeting != meeting_to_change and \
-                    other_meeting.time_slot.day == day and \
-                    other_meeting.time_slot.overlaps_with(new_time_slot) and \
-                    other_meeting.room == new_room:
-                        conflict = True
-                        break
+        room_list = list(rooms.values())
 
-                if not conflict:
-                    meeting_to_change.time_slot = new_time_slot
-                    meeting_to_change.room = new_room
-                    break
-            
-        return neighbor
+        for i, meeting in enumerate(self.meetings):
+            duration = meeting.time_slot.duration()
+            for day_val in range(5):  # Monday..Friday
+                day = TimeSlot.Day(day_val)
+                for start_hour in range(7, 18 - duration + 1):
+                    end_hour = start_hour + duration
+                    new_slot = TimeSlot(day, start_hour, end_hour)
+                    for room in room_list:
+                        # Skip if identical to current placement
+                        if room == meeting.room and \
+                           meeting.time_slot.day == new_slot.day and \
+                           meeting.time_slot.start_hour == new_slot.start_hour and \
+                           meeting.time_slot.end_hour == new_slot.end_hour:
+                            continue
 
-    def get_N_random_neighbors(self, N: int, rooms: dict[str, Room]):
-        return [self.get_random_neighbor(rooms) for _ in range(N)]
+                        neighbor = State()
+                        neighbor.meetings = [copy.copy(m) for m in self.meetings]
+                        neighbor.meetings[i].time_slot = new_slot
+                        neighbor.meetings[i].room = room
+                        neighbors.append(neighbor)
+
+        # 2) Swap: for each pair of meetings, swap their room and time slot if no conflicts
+        n = len(self.meetings)
+        for i in range(n):
+            for j in range(i + 1, n):
+                mi = self.meetings[i]
+                mj = self.meetings[j]
+
+                # Proposed new placements
+                new_slot_i = mj.time_slot
+                new_room_i = mj.room
+                new_slot_j = mi.time_slot
+                new_room_j = mi.room
+
+                # Skip if swapping results in identical state (both same slot and room)
+                if (mi.time_slot.day == new_slot_i.day and mi.time_slot.start_hour == new_slot_i.start_hour and mi.time_slot.end_hour == new_slot_i.end_hour and mi.room == new_room_i) and \
+                   (mj.time_slot.day == new_slot_j.day and mj.time_slot.start_hour == new_slot_j.start_hour and mj.time_slot.end_hour == new_slot_j.end_hour and mj.room == new_room_j):
+                    continue
+
+                neighbor = State()
+                neighbor.meetings = [copy.copy(m) for m in self.meetings]
+                neighbor.meetings[i].time_slot = new_slot_i
+                neighbor.meetings[i].room = new_room_i
+                neighbor.meetings[j].time_slot = new_slot_j
+                neighbor.meetings[j].room = new_room_j
+                neighbors.append(neighbor)
+
+        return neighbors
