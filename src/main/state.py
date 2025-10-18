@@ -18,7 +18,7 @@ class State:
         # Create header
         result = "   "
         for day in TimeSlot.Day:
-            result += f"{day.name:16} "
+            result += f"{day.name:20} "
         result += "\n"
 
         # Create a grid to hold meetings for each time slot
@@ -53,7 +53,7 @@ class State:
                         cell_content = cell_entries[line_idx]
                     else:
                         cell_content = ""
-                    result += f"{cell_content:16} "
+                    result += f"{cell_content:20} "
                 result += "\n"
 
         return result
