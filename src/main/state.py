@@ -3,6 +3,7 @@ import copy
 
 from src.models import TimeSlot, CourseClass, Room
 
+
 class State:
     class Allocation:
         def __init__(self, course_class: CourseClass, time_slot: TimeSlot, room: Room):
@@ -57,7 +58,7 @@ class State:
 
         return result
 
-    def add_meeting(self, meeting: 'State.Allocation'):
+    def add_meeting(self, meeting: "State.Allocation"):
         self.meetings.append(meeting)
 
     def random_fill(self, classes: dict[str, CourseClass], rooms: dict[str, Room]):
@@ -76,62 +77,75 @@ class State:
                 self.meetings.append(meeting)
                 hours_to_allocate -= duration
 
-    
     def get_all_neighbors(self, rooms: dict[str, Room]):
         neighbors = []
-
         room_list = list(rooms.values())
 
-        for i, meeting in enumerate(self.meetings):
-            duration = meeting.time_slot.duration()
+        # Pre-generate all valid time slots grouped by duration for efficiency
+        slots_by_duration = {}
+        for duration in range(1, 11):  # Reasonable max duration
+            slots_by_duration[duration] = []
             for day_val in range(5):  # Monday..Friday
                 day = TimeSlot.Day(day_val)
-                for start_hour in range(7, 18 - duration + 1):
+                for start_hour in range(7, min(18, 18 - duration + 1)):
                     end_hour = start_hour + duration
-                    new_slot = TimeSlot(day, start_hour, end_hour)
-                    for room in room_list:
-                        # Skip if identical to current placement
-                        if room == meeting.room and \
-                           meeting.time_slot.day == new_slot.day and \
-                           meeting.time_slot.start_hour == new_slot.start_hour and \
-                           meeting.time_slot.end_hour == new_slot.end_hour:
-                            continue
+                    slots_by_duration[duration].append(
+                        TimeSlot(day, start_hour, end_hour)
+                    )
 
-                        neighbor = State()
-                        neighbor.meetings = [copy.copy(m) for m in self.meetings]
-                        neighbor.meetings[i].time_slot = new_slot
-                        neighbor.meetings[i].room = room
-                        neighbors.append(neighbor)
+        # 1) Move operations: try different time slots and rooms for each meeting
+        for i, meeting in enumerate(self.meetings):
+            duration = meeting.time_slot.duration()
 
-        # 2) Swap: for each pair of meetings, swap their room and time slot if no conflicts
+            # Get pre-computed valid time slots for this duration
+            valid_slots = slots_by_duration.get(duration, [])
+
+            for new_slot in valid_slots:
+                for room in room_list:
+                    # Skip if identical to current placement
+                    if (
+                        room == meeting.room
+                        and meeting.time_slot.day == new_slot.day
+                        and meeting.time_slot.start_hour == new_slot.start_hour
+                    ):
+                        continue
+
+                    # Create neighbor more efficiently
+                    neighbor = copy.deepcopy(self)
+                    neighbor.meetings[i] = State.Allocation(
+                        meeting.course_class, new_slot, room
+                    )
+                    neighbors.append(neighbor)
+
+        # 2) Swap operations: swap room and time slot between pairs of meetings
         n = len(self.meetings)
         for i in range(n):
             for j in range(i + 1, n):
                 mi = self.meetings[i]
                 mj = self.meetings[j]
 
-                # Proposed new placements
-                new_slot_i = mj.time_slot
-                new_room_i = mj.room
-                new_slot_j = mi.time_slot
-                new_room_j = mi.room
-
-                # Skip if swapping results in identical state (both same slot and room)
-                if (mi.time_slot.day == new_slot_i.day and mi.time_slot.start_hour == new_slot_i.start_hour and mi.time_slot.end_hour == new_slot_i.end_hour and mi.room == new_room_i) and \
-                   (mj.time_slot.day == new_slot_j.day and mj.time_slot.start_hour == new_slot_j.start_hour and mj.time_slot.end_hour == new_slot_j.end_hour and mj.room == new_room_j):
+                # Skip if swapping results in identical state
+                if (
+                    mi.time_slot.day == mj.time_slot.day
+                    and mi.time_slot.start_hour == mj.time_slot.start_hour
+                    and mi.time_slot.end_hour == mj.time_slot.end_hour
+                    and mi.room == mj.room
+                ):
                     continue
 
-                neighbor = State()
-                neighbor.meetings = [copy.copy(m) for m in self.meetings]
-                neighbor.meetings[i].time_slot = new_slot_i
-                neighbor.meetings[i].room = new_room_i
-                neighbor.meetings[j].time_slot = new_slot_j
-                neighbor.meetings[j].room = new_room_j
+                # Create neighbor with swapped assignments
+                neighbor = copy.deepcopy(self)
+                neighbor.meetings[i] = State.Allocation(
+                    mi.course_class, mj.time_slot, mj.room
+                )
+                neighbor.meetings[j] = State.Allocation(
+                    mj.course_class, mi.time_slot, mi.room
+                )
                 neighbors.append(neighbor)
 
         return neighbors
 
-    def get_random_neighbor(self, rooms: dict[str, Room]) -> 'State':
+    def get_random_neighbor(self, rooms: dict[str, Room]) -> "State":
         if not self.meetings:
             return None
 
@@ -143,39 +157,42 @@ class State:
                 TimeSlot(
                     meeting.time_slot.day,
                     meeting.time_slot.start_hour,
-                    meeting.time_slot.end_hour
+                    meeting.time_slot.end_hour,
                 ),
-                meeting.room
+                meeting.room,
             )
             for meeting in self.meetings
         ]
 
         # Choose operation: swap two meetings or move one
-        operation = random.choice(['swap', 'move'])
+        operation = random.choice(["swap", "move"])
         n = len(neighbor.meetings)
-        
-        if operation == 'swap' and n >= 2:
+
+        if operation == "swap" and n >= 2:
             # Swap time slots and rooms of two random meetings
             idx1, idx2 = random.sample(range(n), 2)
             meeting1 = neighbor.meetings[idx1]
             meeting2 = neighbor.meetings[idx2]
-            
+
             # Swap time slots
-            meeting1.time_slot, meeting2.time_slot = meeting2.time_slot, meeting1.time_slot
+            meeting1.time_slot, meeting2.time_slot = (
+                meeting2.time_slot,
+                meeting1.time_slot,
+            )
             # Swap rooms
             meeting1.room, meeting2.room = meeting2.room, meeting1.room
         else:
             # Move: assign random new time slot and room to one meeting
             idx = random.randint(0, n - 1)
             meeting = neighbor.meetings[idx]
-            
+
             # Generate new time slot with same duration
             day = TimeSlot.Day(random.randint(0, 4))
             start_hour = random.randint(7, 17)
             duration = meeting.time_slot.duration()
             end_hour = min(start_hour + duration, 18)
             meeting.time_slot = TimeSlot(day, start_hour, end_hour)
-            
+
             # Assign random room
             room_list = list(rooms.values())
             meeting.room = random.choice(room_list)
