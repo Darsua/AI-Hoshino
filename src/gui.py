@@ -1185,10 +1185,9 @@ class SchedulerGUI(tk.Tk):
             generations=params["generations"].get(),
         )
 
-        best_state, fitness_history, fig = ga.optimize(
+        best_state, results = ga.optimize(
             classes=self.classes,
             rooms=self.rooms,
-            show_plot=False,  # Don't show popup windows in GUI
         )
 
         duration = time.time() - start_time
@@ -1198,6 +1197,7 @@ class SchedulerGUI(tk.Tk):
             return
 
         best_penalty = objective_func.calculate(best_state)
+        fitness_history = results.get("penalty_history", [])
 
         # Display results
         self.log_status("\n" + "=" * 70 + "\n")
@@ -1219,14 +1219,17 @@ class SchedulerGUI(tk.Tk):
 
         # Store state and display
         self.state = best_state
+        self.algorithm_results = results
         self.after(0, self.display_all_schedules)
 
-        # Display plot in GUI
-        if self.show_plots.get() and fig is not None:
+        # Generate and display plot in GUI
+        if self.show_plots.get():
             try:
-                self.after(
-                    0, lambda: self._display_plot(fig, "Genetic Algorithm Progress")
-                )
+                fig = ga.plot_results(results, show=False)  # Don't show popup windows in GUI
+                if fig is not None:
+                    self.after(
+                        0, lambda: self._display_plot(fig, "Genetic Algorithm Progress")
+                    )
             except Exception as e:
                 self.log_status(f"\n⚠️ Could not generate plot: {e}\n")
 
