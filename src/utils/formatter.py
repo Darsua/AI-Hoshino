@@ -144,10 +144,7 @@ class AlgorithmOutputFormatter:
         algorithm_lower = algorithm_name.lower()
 
         if "genetic" in algorithm_lower:
-            if "cache_efficiency" in results:
-                print(
-                    f"Cache Efficiency: {results['cache_efficiency']} evaluations cached"
-                )
+            pass
 
         elif "hill climbing" in algorithm_lower:
             variant = results.get("variant", "")

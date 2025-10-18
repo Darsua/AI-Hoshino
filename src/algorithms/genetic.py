@@ -269,7 +269,9 @@ class GeneticAlgorithm:
         # Pre-calculate initial fitnesses
         fitnesses = initial_fitnesses
 
+        actual_generations = 0
         for generation in range(self.generations):
+            actual_generations = generation + 1
             # Track statistics
             avg_fitness = sum(fitnesses) / len(fitnesses)
             best_fitness_idx = self.get_best_individual_index(fitnesses)
@@ -335,9 +337,8 @@ class GeneticAlgorithm:
 
         # Print completion summary
         results_dict = {
-            "iterations": self.generations,
+            "iterations": actual_generations,
             "best_penalty": final_penalty,
-            "cache_efficiency": len(self._fitness_cache),
             "best_state": best_individual,
             "initial_penalty": initial_penalty,
             "fitness_history": fitness_history,
