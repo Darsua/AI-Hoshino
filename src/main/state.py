@@ -130,3 +130,54 @@ class State:
                 neighbors.append(neighbor)
 
         return neighbors
+
+    def get_random_neighbor(self, rooms: dict[str, Room]) -> 'State':
+        if not self.meetings:
+            return None
+
+        neighbor = State()
+        # Deep copy meetings with new TimeSlot objects
+        neighbor.meetings = [
+            State.Allocation(
+                meeting.course_class,
+                TimeSlot(
+                    meeting.time_slot.day,
+                    meeting.time_slot.start_hour,
+                    meeting.time_slot.end_hour
+                ),
+                meeting.room
+            )
+            for meeting in self.meetings
+        ]
+
+        # Choose operation: swap two meetings or move one
+        operation = random.choice(['swap', 'move'])
+        n = len(neighbor.meetings)
+        
+        if operation == 'swap' and n >= 2:
+            # Swap time slots and rooms of two random meetings
+            idx1, idx2 = random.sample(range(n), 2)
+            meeting1 = neighbor.meetings[idx1]
+            meeting2 = neighbor.meetings[idx2]
+            
+            # Swap time slots
+            meeting1.time_slot, meeting2.time_slot = meeting2.time_slot, meeting1.time_slot
+            # Swap rooms
+            meeting1.room, meeting2.room = meeting2.room, meeting1.room
+        else:
+            # Move: assign random new time slot and room to one meeting
+            idx = random.randint(0, n - 1)
+            meeting = neighbor.meetings[idx]
+            
+            # Generate new time slot with same duration
+            day = TimeSlot.Day(random.randint(0, 4))
+            start_hour = random.randint(7, 17)
+            duration = meeting.time_slot.duration()
+            end_hour = min(start_hour + duration, 18)
+            meeting.time_slot = TimeSlot(day, start_hour, end_hour)
+            
+            # Assign random room
+            room_list = list(rooms.values())
+            meeting.room = random.choice(room_list)
+
+        return neighbor

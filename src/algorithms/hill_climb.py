@@ -1,7 +1,15 @@
 from src.main.state import State
 from src.main.objective import ObjectiveFunction
 from src.models import Room, CourseClass
-from src.utils.plotter import plot_results as plot
+try:
+    import matplotlib
+    # Use a non-interactive backend if DISPLAY is not set (headless safe)
+    if 'DISPLAY' not in __import__('os').environ:
+        matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    MATPLOTLIB_AVAILABLE = True
+except Exception:
+    MATPLOTLIB_AVAILABLE = False
 import time
 import copy
 import random
@@ -60,15 +68,45 @@ class HillClimbing:
         
         return best_state, results
 
-    def plot_results(self, results: dict):
+    def plot_results(self, results: dict, show: bool = True):
+        """
+        Plot optimization results. Set show=False when using with GUI to prevent popup windows.
+        """
         variant = results.get("variant", "Hill Climbing")
         title = f'{variant.replace("_", " ").title()} Optimization'
-        history = results["history"]
-        
+        history = results.get("history", [])
+
         # For random_restart, the history is of best values per restart, so x-axis is restarts
         xlabel = "Restarts" if variant == "random_restart" else "Iterations"
+
+        if not MATPLOTLIB_AVAILABLE:
+            print(f"[plot] matplotlib not available; {title}: {len(history)} points")
+            return None
         
-        plot(history, title, xlabel)
+        # Use Figure directly for GUI (thread-safe), plt.figure() for CLI (interactive)
+        if show:
+            # CLI mode: use plt.figure() for interactive display
+            fig, ax = plt.subplots(figsize=(12, 6), facecolor='white')
+        else:
+            # GUI mode: use Figure directly to avoid threading issues
+            from matplotlib.figure import Figure
+            fig = Figure(figsize=(12, 6), facecolor='white')
+            ax = fig.add_subplot(111)
+        
+        ax.set_facecolor('white')  # White plot area background
+        ax.plot(range(len(history)), history, marker='o', linewidth=2, markersize=5, color='tab:blue', alpha=0.8)
+        ax.set_title(title, fontsize=16, fontweight='bold')
+        ax.set_xlabel(xlabel, fontsize=14, fontweight='bold')
+        ax.set_ylabel('Penalty', fontsize=14, fontweight='bold')
+        ax.tick_params(labelsize=11)
+        ax.grid(True, alpha=0.3)
+
+        fig.tight_layout()
+        
+        if show:
+            plt.show()
+        
+        return fig
 
     def _stochastic_hc(self, initial_state: State, max_iterations: int):
         current_state = initial_state
@@ -77,32 +115,31 @@ class HillClimbing:
         best_value = current_value
         
         history = [current_value]
-        stagnation_count = 0
 
         for i in range(max_iterations):
-            neighbors = current_state.get_all_neighbors(self.rooms)
-            if not neighbors:
-                break
-            neighbor = random.choice(neighbors)
+            neighbor = current_state.get_random_neighbor(self.rooms)
+            if neighbor is None:
+                # No valid neighbor could be generated, continue to next iteration
+                history.append(best_value)
+                continue
+            
+            # Evaluate the neighbor
             neighbor_value = self.objective_function.calculate(neighbor)
-
+            
+            # Move to neighbor only if it's better (uphill move)
             if neighbor_value < current_value:
                 current_state = neighbor
                 current_value = neighbor_value
-                stagnation_count = 0
-            else:
-                stagnation_count += 1
-
-            if current_value < best_value:
-                best_state = copy.deepcopy(current_state)
-                best_value = current_value
+                
+                # Update best if this is the best so far
+                if current_value < best_value:
+                    best_state = copy.deepcopy(current_state)
+                    best_value = current_value
             
             history.append(best_value)
-            if stagnation_count >= 100: # Stop if no improvement for 100 iterations
-                break
 
         return best_state, history
-
+    
     def _steepest_ascent_hc(self, initial_state: State, max_iterations: int):
         current_state = initial_state
         current_value = self.objective_function.calculate(current_state)
