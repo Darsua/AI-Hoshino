@@ -6,6 +6,7 @@ from typing import Tuple, List, Dict
 
 # Optional matplotlib import for plotting
 try:
+    import matplotlib
     import matplotlib.pyplot as plt
     MATPLOTLIB_AVAILABLE = True
 except ImportError:
@@ -42,58 +43,6 @@ class SimulatedAnnealing:
         self.best_objective_history = []
         self.local_optima_count = 0
         self.iterations_stuck = []
-        
-    def generate_neighbor(self, current_state: State) -> State:
-        neighbor = State()
-        # Deep copy meetings
-        neighbor.meetings = [
-            State.Allocation(
-                meeting.course_class,
-                TimeSlot(
-                    meeting.time_slot.day,
-                    meeting.time_slot.start_hour,
-                    meeting.time_slot.end_hour
-                ),
-                meeting.room
-            )
-            for meeting in current_state.meetings
-        ]
-        
-        if len(neighbor.meetings) < 2:
-            return neighbor
-        
-        # Choose random operation
-        operation = random.choice(['swap', 'move'])
-        
-        if operation == 'swap' and len(neighbor.meetings) >= 2:
-            # Swap time slots and rooms of two random meetings
-            idx1, idx2 = random.sample(range(len(neighbor.meetings)), 2)
-            meeting1 = neighbor.meetings[idx1]
-            meeting2 = neighbor.meetings[idx2]
-            
-            # Swap time slots
-            meeting1.time_slot, meeting2.time_slot = meeting2.time_slot, meeting1.time_slot
-            # Swap rooms
-            meeting1.room, meeting2.room = meeting2.room, meeting1.room
-            
-        else:  # move
-            # Move a random meeting to a new time slot and room
-            idx = random.randint(0, len(neighbor.meetings) - 1)
-            meeting = neighbor.meetings[idx]
-            
-            # Generate new time slot
-            day = TimeSlot.Day(random.randint(0, 4))
-            start_hour = random.randint(7, 17)
-            duration = meeting.time_slot.duration()
-            end_hour = min(start_hour + duration, 18)
-            
-            meeting.time_slot = TimeSlot(day, start_hour, end_hour)
-            
-            # Assign new room
-            room_list = list(self.rooms.values())
-            meeting.room = random.choice(room_list)
-        
-        return neighbor
     
     def acceptance_probability(self, current_penalty: float, neighbor_penalty: float, temperature: float) -> float:
         # If neighbor is better, always accept
@@ -166,7 +115,7 @@ class SimulatedAnnealing:
         # Main loop
         while temperature > self.min_temp and iteration < self.max_iterations:
             # Generate neighbor
-            neighbor_state = self.generate_neighbor(current_state)
+            neighbor_state = current_state.get_random_neighbor(self.rooms)
             neighbor_penalty = self.objective_function.calculate(neighbor_state)
             
             # Calculate acceptance probability
@@ -241,160 +190,135 @@ class SimulatedAnnealing:
         
         return best_state, results
     
-    def plot_results(self, results: Dict, save_path: str = None):
+    def plot_results(self, results: Dict, save_path: str = None, show: bool = True):
+        """
+        Plot optimization results. Set show=False when using with GUI to prevent popup windows.
+        """
         if not MATPLOTLIB_AVAILABLE:
             print("Warning: matplotlib not available. Install it to generate plots:")
             print("  pip install matplotlib")
-            return None
+            return []
             
-        fig, axes = plt.subplots(2, 2, figsize=(15, 10))
-        fig.suptitle('Simulated Annealing Optimization Results', fontsize=16, fontweight='bold')
+        figures = []
+        
+        # ========== PLOT 1: Objective Function vs Iterations ==========
+        # Use Figure directly for GUI (thread-safe), plt.figure() for CLI (interactive)
+        if show:
+            # CLI mode: use plt.figure() for interactive display
+            fig1 = plt.figure(figsize=(14, 7), facecolor='white')
+            ax1 = fig1.add_axes([0.08, 0.12, 0.65, 0.78])
+        else:
+            # GUI mode: use Figure directly to avoid threading issues
+            from matplotlib.figure import Figure
+            fig1 = Figure(figsize=(14, 7), facecolor='white')
+            ax1 = fig1.add_axes([0.08, 0.12, 0.65, 0.78])
+        
+        ax1.set_facecolor('white')  # White plot area background
         
         iterations = range(len(results['objective_history']))
         
-        # Plot 1: Objective Value vs Iterations
-        ax1 = axes[0, 0]
+        # Plot current and best penalty
         ax1.plot(iterations, results['objective_history'], 
-                label='Current Penalty', alpha=0.7, linewidth=1)
+                label='Current Penalty', alpha=0.7, linewidth=1.5,
+                color='#3B82F6')
         ax1.plot(iterations, results['best_objective_history'], 
-                label='Best Penalty', color='green', linewidth=2)
+                label='Best Penalty Found', linewidth=2.5,
+                color='#10B981')
         
-        # Mark local optima points
+        # Mark local optima points if any
         if results['iterations_stuck']:
             stuck_iterations = results['iterations_stuck']
-            stuck_penalties = [results['objective_history'][i] for i in stuck_iterations]
-            ax1.scatter(stuck_iterations, stuck_penalties, 
-                       color='red', s=100, marker='x', 
+            stuck_penalties = [results['objective_history'][i] for i in stuck_iterations if i < len(results['objective_history'])]
+            ax1.scatter(stuck_iterations[:len(stuck_penalties)], stuck_penalties, 
+                       color='#EF4444', s=120, marker='x', linewidth=3,
                        label=f"Stuck in Local Optima ({results['local_optima_count']}x)",
                        zorder=5)
         
-        ax1.set_xlabel('Iteration')
-        ax1.set_ylabel('Penalty (Objective Value)')
-        ax1.set_title('Objective Value vs Iterations')
-        ax1.legend()
-        ax1.grid(True, alpha=0.3)
+        ax1.set_xlabel('Iteration', fontsize=7, fontweight='bold')  # Reduced from 14 to 7
+        ax1.set_ylabel('Penalty (Objective Function Value)', fontsize=7, fontweight='bold')  # Reduced from 14 to 7
+        ax1.set_title('Simulated Annealing: Objective Function vs Iterations', 
+                     fontsize=8, fontweight='bold', pad=15)  # Reduced from 16 to 8
+        ax1.legend(loc='upper right', fontsize=5.5, framealpha=0.9)  # Reduced from 11 to 5.5
+        ax1.grid(True, alpha=0.3, linestyle='--')
+        ax1.tick_params(labelsize=5.5)  # Reduced from 11 to 5.5
         
-        # Plot 2: Acceptance Probability vs Iterations
-        ax2 = axes[0, 1]
+        # Add summary text box outside plot area (top right)
+        # Make it more compact for GUI display with smaller padding
+        summary_text = "SUMMARY\n" + "="*22 + "\n"
+        summary_text += f"Initial:    {results['initial_penalty']:.2f}\n"
+        summary_text += f"Final:      {results['final_penalty']:.2f}\n"
+        summary_text += f"Best:       {results['best_penalty']:.2f}\n"
+        improvement = results['initial_penalty'] - results['best_penalty']
+        improvement_pct = (improvement / results['initial_penalty'] * 100) if results['initial_penalty'] > 0 else 0
+        summary_text += f"Improve:    {improvement:.2f} ({improvement_pct:.1f}%)\n"
+        summary_text += f"Iterations: {results['iterations']}\n"
+        summary_text += f"Duration:   {results['duration']:.2f}s\n"
+        summary_text += f"Local Opt:  {results['local_optima_count']}"
+        
+        fig1.text(0.77, 0.88, summary_text, transform=fig1.transFigure,
+                 fontsize=9, verticalalignment='top', family='monospace',
+                 bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.9, pad=1.5))
+        
+        figures.append(fig1)
+        
+        # ========== PLOT 2: Acceptance Probability vs Iterations ==========
+        # Use Figure directly for GUI (thread-safe), plt.figure() for CLI (interactive)
+        if show:
+            # CLI mode: use plt.figure() for interactive display
+            fig2 = plt.figure(figsize=(14, 7), facecolor='white')
+            ax2 = fig2.add_axes([0.08, 0.12, 0.65, 0.78])
+        else:
+            # GUI mode: use Figure directly to avoid threading issues
+            from matplotlib.figure import Figure
+            fig2 = Figure(figsize=(14, 7), facecolor='white')
+            ax2 = fig2.add_axes([0.08, 0.12, 0.65, 0.78])
+        
+        ax2.set_facecolor('white')  # White plot area background
+        
         acceptance_iterations = range(len(results['acceptance_prob_history']))
+        
+        # Plot acceptance probability
         ax2.plot(acceptance_iterations, results['acceptance_prob_history'], 
-                color='orange', alpha=0.6, linewidth=1)
-        ax2.set_xlabel('Iteration')
-        ax2.set_ylabel('Acceptance Probability (e^(ΔE/T))')
-        ax2.set_title('Acceptance Probability vs Iterations')
-        ax2.set_ylim(-0.05, 1.05)
-        ax2.grid(True, alpha=0.3)
+                color='#F59E0B', alpha=0.7, linewidth=1.5,
+                label='Acceptance Probability')
         
-        # Add statistics to acceptance probability plot
+        # Add average line
         avg_accept = sum(results['acceptance_prob_history']) / len(results['acceptance_prob_history'])
-        ax2.axhline(y=avg_accept, color='red', linestyle='--', 
+        ax2.axhline(y=avg_accept, color='#EF4444', linestyle='--', linewidth=2,
                    label=f'Average: {avg_accept:.3f}')
-        ax2.legend()
         
-        # Plot 3: Temperature vs Iterations
-        ax3 = axes[1, 0]
-        temp_iterations = range(len(results['temperature_history']))
-        ax3.plot(temp_iterations, results['temperature_history'], 
-                color='purple', linewidth=2)
-        ax3.set_xlabel('Iteration')
-        ax3.set_ylabel('Temperature')
-        ax3.set_title('Temperature vs Iterations (Cooling Schedule)')
-        ax3.grid(True, alpha=0.3)
-        ax3.set_yscale('log')  # Log scale to better visualize exponential decay
+        # Add threshold reference line (removed text label from plot)
+        ax2.axhline(y=0.5, color='#6B7280', linestyle=':', linewidth=1, alpha=0.5,
+                   label='50% threshold')
         
-        # Plot 4: Summary Statistics
-        ax4 = axes[1, 1]
-        ax4.axis('off')
+        ax2.set_xlabel('Iteration', fontsize=7, fontweight='bold')  # Reduced from 14 to 7
+        ax2.set_ylabel('Acceptance Probability e^(ΔE/T)', fontsize=7, fontweight='bold')  # Reduced from 14 to 7
+        ax2.set_title('Simulated Annealing: Acceptance Probability vs Iterations', 
+                     fontsize=8, fontweight='bold', pad=15)  # Reduced from 16 to 8
+        ax2.set_ylim(-0.05, 1.05)
+        ax2.legend(loc='upper right', fontsize=5.5, framealpha=0.9)  # Reduced from 11 to 5.5
+        ax2.grid(True, alpha=0.3, linestyle='--')
+        ax2.tick_params(labelsize=5.5)  # Reduced from 11 to 5.5
         
-        summary_text = f"""
-        OPTIMIZATION SUMMARY
-        {'=' * 40}
+        # Add info text box outside plot area (top right) - more compact with smaller padding
+        high_accept_rate = len([p for p in results['acceptance_prob_history'] if p > 0.5]) / len(results['acceptance_prob_history']) * 100
+        info_text = "PARAMETERS\n" + "="*20 + "\n"
+        info_text += f"Init Temp:  {self.initial_temp:.1f}\n"
+        info_text += f"Final Temp: {results['temperature_history'][-1]:.4f}\n"
+        info_text += f"Cool Rate:  {self.cooling_rate}\n"
+        info_text += "\nSTATISTICS\n" + "="*20 + "\n"
+        info_text += f"Avg Accept: {avg_accept:.3f}\n"
+        info_text += f"High Rate:  {high_accept_rate:.1f}%\n"
+        info_text += f"(>50% thr.)"
         
-        Initial Penalty:     {results['initial_penalty']:.2f}
-        Final Penalty:       {results['final_penalty']:.2f}
-        Best Penalty:        {results['best_penalty']:.2f}
+        fig2.text(0.77, 0.88, info_text, transform=fig2.transFigure,
+                 fontsize=9, verticalalignment='top', family='monospace',
+                 bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.9, pad=1.5))
         
-        Improvement:         {results['initial_penalty'] - results['best_penalty']:.2f}
-        Improvement %:       {(results['initial_penalty'] - results['best_penalty']) / results['initial_penalty'] * 100:.1f}%
+        figures.append(fig2)
         
-        Total Iterations:    {results['iterations']}
-        Duration:            {results['duration']:.2f} seconds
+        # Display all figures only if show=True (CLI mode)
+        if show:
+            plt.show()
         
-        Initial Temperature: {self.initial_temp:.2f}
-        Final Temperature:   {results['temperature_history'][-1]:.4f}
-        Cooling Rate:        {self.cooling_rate}
-        
-        Local Optima Count:  {results['local_optima_count']}
-        Stuck at Iterations: {results['iterations_stuck'][:5]}
-                             {'...' if len(results['iterations_stuck']) > 5 else ''}
-        """
-        
-        ax4.text(0.1, 0.5, summary_text, fontsize=11, family='monospace',
-                verticalalignment='center')
-        
-        plt.tight_layout()
-        
-        # Commented out for GUI integration - graphs will be displayed, not saved
-        # if save_path:
-        #     plt.savefig(save_path, dpi=300, bbox_inches='tight')
-        #     print(f"Plot saved to {save_path}")
-        
-        plt.show()
-        
-        return fig
-    
-    def plot_acceptance_probability_detail(self, results: Dict, save_path: str = None):
-        if not MATPLOTLIB_AVAILABLE:
-            print("Warning: matplotlib not available. Install it to generate plots:")
-            print("  uv add matplotlib")
-            return None
-            
-        fig, ax = plt.subplots(figsize=(12, 6))
-        
-        acceptance_probs = results['acceptance_prob_history']
-        iterations = range(len(acceptance_probs))
-        
-        # Create scatter plot with color gradient
-        scatter = ax.scatter(iterations, acceptance_probs, 
-                           c=acceptance_probs, cmap='RdYlGn',
-                           s=10, alpha=0.6)
-        
-        # Add colorbar
-        cbar = plt.colorbar(scatter, ax=ax)
-        cbar.set_label('Acceptance Probability', rotation=270, labelpad=20)
-        
-        # Add threshold lines
-        ax.axhline(y=0.5, color='blue', linestyle='--', alpha=0.5, 
-                  label='50% Acceptance')
-        ax.axhline(y=0.1, color='orange', linestyle='--', alpha=0.5, 
-                  label='10% Acceptance')
-        
-        ax.set_xlabel('Iteration', fontsize=12)
-        ax.set_ylabel('Acceptance Probability e^(ΔE/T)', fontsize=12)
-        ax.set_title('Detailed View: Acceptance Probability Over Iterations', 
-                    fontsize=14, fontweight='bold')
-        ax.set_ylim(-0.05, 1.05)
-        ax.legend()
-        ax.grid(True, alpha=0.3)
-        
-        # Add statistics
-        total_accepts = sum(1 for p in acceptance_probs if random.random() < p)
-        accept_rate = len([p for p in acceptance_probs if p > 0.5]) / len(acceptance_probs) * 100
-        
-        stats_text = f"High Acceptance Rate (>50%): {accept_rate:.1f}%\n"
-        stats_text += f"Mean Acceptance Prob: {sum(acceptance_probs) / len(acceptance_probs):.3f}"
-        
-        ax.text(0.02, 0.98, stats_text, transform=ax.transAxes,
-               fontsize=10, verticalalignment='top',
-               bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
-        
-        plt.tight_layout()
-        
-        # Commented out for GUI integration - graphs will be displayed, not saved
-        # if save_path:
-        #     plt.savefig(save_path, dpi=300, bbox_inches='tight')
-        #     print(f"Acceptance probability detail plot saved to {save_path}")
-        
-        plt.show()
-        
-        return fig
+        return figures
