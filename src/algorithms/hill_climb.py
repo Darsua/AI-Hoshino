@@ -49,6 +49,7 @@ class HillClimbing:
             "restarts": 0,
             "iterations_per_restart": [],
             "variant": variant,
+            "initial_penalty": initial_penalty,
         }
 
         if variant == "stochastic":
