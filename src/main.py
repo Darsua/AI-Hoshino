@@ -123,9 +123,8 @@ def main():
             
             if args.plot:
                 print("\nGenerating visualization plots...")
-                sa.plot_results(results)
-                sa.plot_acceptance_probability_detail(results)
-                print("✓ Plots displayed")
+                figures = sa.plot_results(results, show=True)  # Show plots in CLI
+                print(f"✓ {len(figures)} plots displayed")
 
         elif args.hc:
             from src.algorithms.hill_climb import HillClimbing
@@ -199,7 +198,7 @@ def main():
 
             if args.plot:
                 print("\nGenerating visualization plots...")
-                hc.plot_results(results)
+                fig = hc.plot_results(results, show=True)  # Show plot in CLI
                 print("✓ Plot displayed")
 
         else:
