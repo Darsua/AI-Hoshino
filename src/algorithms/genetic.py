@@ -234,6 +234,10 @@ class GeneticAlgorithm:
         Returns:
             Tuple of (best_individual, results_dict)
         """
+        import time
+
+        start_time = time.time()
+
         # Clear caches for new optimization
         self._fitness_cache.clear()
         self._penalty_cache.clear()
@@ -335,17 +339,20 @@ class GeneticAlgorithm:
         best_individual = population[best_index]
         final_penalty = self.get_penalty(best_individual)
 
+        duration = time.time() - start_time
+
         # Print completion summary
         results_dict = {
             "iterations": actual_generations,
             "best_penalty": final_penalty,
+            "duration": duration,
             "best_state": best_individual,
             "initial_penalty": initial_penalty,
             "fitness_history": fitness_history,
             "penalty_history": best_penalty_history,
         }
         AlgorithmOutputFormatter.print_algorithm_completion(
-            "Genetic Algorithm", results_dict, initial_penalty
+            "Genetic Algorithm", results_dict, initial_penalty, duration
         )
 
         return best_individual, results_dict
