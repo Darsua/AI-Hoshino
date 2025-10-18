@@ -108,7 +108,6 @@ HELP_TEXT = """
 └─────────────────────────────────────────────────────────────────────┘
   Variant              Select the Hill Climbing variant to use
   Max Iterations       Maximum number of improvement iterations
-  Num Neighbors        Number of neighbors to evaluate (Steepest Ascent)
   Max Sideways Moves   Plateau steps allowed (Sideways Move variant)
   Max Restarts         Number of random restarts (Random Restart variant)
 
@@ -211,8 +210,6 @@ class SchedulerGUI(tk.Tk):
 
         # Store HC parameter widgets for dynamic enabling/disabling
         self.hc_param_widgets = {
-            "num_neighbors_label": None,
-            "num_neighbors_entry": None,
             "max_sideways_label": None,
             "max_sideways_entry": None,
             "max_restarts_label": None,
@@ -233,7 +230,6 @@ class SchedulerGUI(tk.Tk):
             "hill_climbing": {
                 "variant": tk.StringVar(value="steepest_ascent"),
                 "max_iterations": tk.IntVar(value=1000),
-                "num_neighbors": tk.IntVar(value=10),
                 "max_sideways_moves": tk.IntVar(value=100),
                 "max_restarts": tk.IntVar(value=10),
                 "restart_variant": tk.StringVar(value="steepest_ascent"),
@@ -806,41 +802,29 @@ class SchedulerGUI(tk.Tk):
                 self.param_frame, textvariable=params["max_iterations"], width=20
             ).grid(row=1, column=1, pady=2)
 
-            # Num Neighbors (for steepest_ascent and sideways_move)
-            self.hc_param_widgets["num_neighbors_label"] = ttk.Label(
-                self.param_frame, text="Num Neighbors:"
-            )
-            self.hc_param_widgets["num_neighbors_label"].grid(
-                row=2, column=0, sticky="w", pady=2
-            )
-            self.hc_param_widgets["num_neighbors_entry"] = ttk.Entry(
-                self.param_frame, textvariable=params["num_neighbors"], width=20
-            )
-            self.hc_param_widgets["num_neighbors_entry"].grid(row=2, column=1, pady=2)
-
             # Max Sideways Moves (for sideways_move only)
             self.hc_param_widgets["max_sideways_label"] = ttk.Label(
                 self.param_frame, text="Max Sideways:"
             )
             self.hc_param_widgets["max_sideways_label"].grid(
-                row=3, column=0, sticky="w", pady=2
+                row=2, column=0, sticky="w", pady=2
             )
             self.hc_param_widgets["max_sideways_entry"] = ttk.Entry(
                 self.param_frame, textvariable=params["max_sideways_moves"], width=20
             )
-            self.hc_param_widgets["max_sideways_entry"].grid(row=3, column=1, pady=2)
+            self.hc_param_widgets["max_sideways_entry"].grid(row=2, column=1, pady=2)
 
             # Max Restarts (for random_restart only)
             self.hc_param_widgets["max_restarts_label"] = ttk.Label(
                 self.param_frame, text="Max Restarts:"
             )
             self.hc_param_widgets["max_restarts_label"].grid(
-                row=4, column=0, sticky="w", pady=2
+                row=3, column=0, sticky="w", pady=2
             )
             self.hc_param_widgets["max_restarts_entry"] = ttk.Entry(
                 self.param_frame, textvariable=params["max_restarts"], width=20
             )
-            self.hc_param_widgets["max_restarts_entry"].grid(row=4, column=1, pady=2)
+            self.hc_param_widgets["max_restarts_entry"].grid(row=3, column=1, pady=2)
 
             # Initialize parameter states based on current variant
             self.update_hc_param_states()
@@ -892,35 +876,20 @@ class SchedulerGUI(tk.Tk):
         variant = self.algorithm_params["hill_climbing"]["variant"].get()
 
         # Define which parameters are needed for each variant
-        # steepest_ascent: needs num_neighbors
         # stochastic: needs nothing extra
-        # sideways_move: needs num_neighbors, max_sideways_moves
-        # random_restart: needs max_restarts (and inherits parameters from restart_variant)
+        # steepest_ascent: evaluates all neighbors
+        # sideways_move: needs max_sideways_moves
+        # random_restart: needs max_restarts
 
         # Determine enabled states
-        enable_num_neighbors = variant in ["steepest_ascent", "sideways_move"]
         enable_max_sideways = variant == "sideways_move"
         enable_max_restarts = variant == "random_restart"
 
         # Update widget states
-        state_num_neighbors = "normal" if enable_num_neighbors else "disabled"
         state_max_sideways = "normal" if enable_max_sideways else "disabled"
         state_max_restarts = "normal" if enable_max_restarts else "disabled"
 
         # Apply states to widgets if they exist
-        if self.hc_param_widgets["num_neighbors_entry"]:
-            self.hc_param_widgets["num_neighbors_entry"].config(
-                state=state_num_neighbors
-            )
-            # Update label color to indicate disabled state
-            fg_color = (
-                self.dark_theme["fg"]
-                if enable_num_neighbors
-                else self.dark_theme["disabled_fg"]
-            )
-            if self.dark_mode:
-                self.hc_param_widgets["num_neighbors_label"].config(foreground=fg_color)
-
         if self.hc_param_widgets["max_sideways_entry"]:
             self.hc_param_widgets["max_sideways_entry"].config(state=state_max_sideways)
             fg_color = (
@@ -988,8 +957,10 @@ class SchedulerGUI(tk.Tk):
     def cancel_algorithm(self):
         if self.is_running:
             self.cancel_requested = True
-            self.log_status("\n⚠️ Cancellation requested... stopping algorithm.\n")
-            self.cancel_button.config(state=tk.DISABLED)
+            self.log_status("\n⚠️ Cancellation requested...\n")
+            self.log_status("   Note: Algorithm will stop after current iteration completes.\n")
+            self.log_status("   This may take a few seconds for large problems.\n")
+            self.cancel_button.config(state=tk.DISABLED, text="⏳ Stopping...")
 
     def _execute_algorithm(self):
         try:
@@ -1020,7 +991,7 @@ class SchedulerGUI(tk.Tk):
             self.is_running = False
             self.cancel_requested = False
             self.run_button.config(state=tk.NORMAL, text="▶️ Run")
-            self.cancel_button.config(state=tk.DISABLED)
+            self.cancel_button.config(state=tk.DISABLED, text="⏹️ Cancel")
 
     def _run_hill_climbing(self, objective_func, params):
         if self.cancel_requested:
@@ -1051,7 +1022,6 @@ class SchedulerGUI(tk.Tk):
             initial_state=initial_state,
             variant=params["variant"].get(),
             max_iterations=params["max_iterations"].get(),
-            num_neighbors=params["num_neighbors"].get(),
             max_sideways_moves=params["max_sideways_moves"].get(),
             max_restarts=params["max_restarts"].get(),
             restart_variant="steepest_ascent",
