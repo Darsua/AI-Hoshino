@@ -234,16 +234,16 @@ class SimulatedAnnealing:
                        label=f"Stuck in Local Optima ({results['local_optima_count']}x)",
                        zorder=5)
         
-        ax1.set_xlabel('Iteration', fontsize=7, fontweight='bold')  # Reduced from 14 to 7
-        ax1.set_ylabel('Penalty (Objective Function Value)', fontsize=7, fontweight='bold')  # Reduced from 14 to 7
+        ax1.set_xlabel('Iteration', fontsize=7, fontweight='bold')  
+        ax1.set_ylabel('Penalty (Objective Function Value)', fontsize=7, fontweight='bold')  
         ax1.set_title('Simulated Annealing: Objective Function vs Iterations', 
-                     fontsize=8, fontweight='bold', pad=15)  # Reduced from 16 to 8
-        ax1.legend(loc='upper right', fontsize=5.5, framealpha=0.9)  # Reduced from 11 to 5.5
+                     fontsize=8, fontweight='bold', pad=15) 
+        ax1.legend(loc='upper right', fontsize=5.5, framealpha=0.9)  
         ax1.grid(True, alpha=0.3, linestyle='--')
-        ax1.tick_params(labelsize=5.5)  # Reduced from 11 to 5.5
+        ax1.tick_params(labelsize=5.5) 
         
         # Add summary text box outside plot area (top right)
-        # Make it more compact for GUI display with smaller padding
+        # Make it more compact for GUI display
         summary_text = "SUMMARY\n" + "="*22 + "\n"
         summary_text += f"Initial:    {results['initial_penalty']:.2f}\n"
         summary_text += f"Final:      {results['final_penalty']:.2f}\n"
@@ -257,7 +257,7 @@ class SimulatedAnnealing:
         
         fig1.text(0.77, 0.88, summary_text, transform=fig1.transFigure,
                  fontsize=9, verticalalignment='top', family='monospace',
-                 bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.9, pad=1.5))
+                 bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.9, pad=1))
         
         figures.append(fig1)
         
@@ -291,16 +291,16 @@ class SimulatedAnnealing:
         ax2.axhline(y=0.5, color='#6B7280', linestyle=':', linewidth=1, alpha=0.5,
                    label='50% threshold')
         
-        ax2.set_xlabel('Iteration', fontsize=7, fontweight='bold')  # Reduced from 14 to 7
-        ax2.set_ylabel('Acceptance Probability e^(ΔE/T)', fontsize=7, fontweight='bold')  # Reduced from 14 to 7
+        ax2.set_xlabel('Iteration', fontsize=7, fontweight='bold')  
+        ax2.set_ylabel('Acceptance Probability e^(ΔE/T)', fontsize=7, fontweight='bold')  
         ax2.set_title('Simulated Annealing: Acceptance Probability vs Iterations', 
-                     fontsize=8, fontweight='bold', pad=15)  # Reduced from 16 to 8
+                     fontsize=8, fontweight='bold', pad=15)  
         ax2.set_ylim(-0.05, 1.05)
-        ax2.legend(loc='upper right', fontsize=5.5, framealpha=0.9)  # Reduced from 11 to 5.5
+        ax2.legend(loc='upper right', fontsize=5.5, framealpha=0.9)  
         ax2.grid(True, alpha=0.3, linestyle='--')
-        ax2.tick_params(labelsize=5.5)  # Reduced from 11 to 5.5
+        ax2.tick_params(labelsize=5.5) 
         
-        # Add info text box outside plot area (top right) - more compact with smaller padding
+        # Add info text box outside plot area (top right) 
         high_accept_rate = len([p for p in results['acceptance_prob_history'] if p > 0.5]) / len(results['acceptance_prob_history']) * 100
         info_text = "PARAMETERS\n" + "="*20 + "\n"
         info_text += f"Init Temp:  {self.initial_temp:.1f}\n"
@@ -313,7 +313,7 @@ class SimulatedAnnealing:
         
         fig2.text(0.77, 0.88, info_text, transform=fig2.transFigure,
                  fontsize=9, verticalalignment='top', family='monospace',
-                 bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.9, pad=1.5))
+                 bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.9, pad=1))
         
         figures.append(fig2)
         
