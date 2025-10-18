@@ -1,15 +1,18 @@
-import random
 import copy
-from typing import List, Dict, Tuple, Optional
-import matplotlib
+import random
+from typing import Dict, List, Tuple
+
 import matplotlib.pyplot as plt
-from src.main.state import State
+
+
 from src.main.objective import ObjectiveFunction
-from src.models import TimeSlot, CourseClass, Room
+from src.main.state import State
+from src.models import CourseClass, Room, TimeSlot
+from src.utils.formatter import AlgorithmOutputFormatter, ProgressTracker
 
 
 class GeneticAlgorithm:
-    def __init__(self, population_size: int = 20, generations: int = 100):
+    def __init__(self, population_size: int = 32, generations: int = 100):
         """
         Initialize the Genetic Algorithm for course scheduling.
 
@@ -221,13 +224,15 @@ class GeneticAlgorithm:
         return bool(self.classes and self.rooms and self.room_list)
 
     def optimize(
-        self, classes: Dict[str, CourseClass], rooms: Dict[str, Room], show_plot: bool = True
-    ) -> Tuple[State, List[float]]:
+        self,
+        classes: Dict[str, CourseClass],
+        rooms: Dict[str, Room],
+    ) -> Tuple[State, Dict]:
         """
         Run the genetic algorithm to find optimal schedule.
 
         Returns:
-            Tuple of (best_individual, fitness_history)
+            Tuple of (best_individual, results_dict)
         """
         # Clear caches for new optimization
         self._fitness_cache.clear()
@@ -237,8 +242,13 @@ class GeneticAlgorithm:
         if not classes or not rooms:
             raise ValueError("Classes and rooms dictionaries cannot be empty")
 
-        print(
-            f"Starting Genetic Algorithm with {self.population_size} individuals for {self.generations} generations..."
+        # Print algorithm start message
+        AlgorithmOutputFormatter.print_algorithm_start(
+            "Genetic Algorithm",
+            {
+                "Population Size": self.population_size,
+                "Generations": self.generations,
+            },
         )
 
         # Initialize population
@@ -246,8 +256,18 @@ class GeneticAlgorithm:
         fitness_history = []
         best_penalty_history = []
 
+        # Display initial state (best individual from initial population)
+        initial_fitnesses = [
+            self.evaluate_fitness(individual) for individual in population
+        ]
+        best_initial_idx = self.get_best_individual_index(initial_fitnesses)
+        initial_best = population[best_initial_idx]
+        initial_penalty = self.get_penalty(initial_best)
+
+        AlgorithmOutputFormatter.print_initial_state(initial_best, initial_penalty)
+
         # Pre-calculate initial fitnesses
-        fitnesses = [self.evaluate_fitness(individual) for individual in population]
+        fitnesses = initial_fitnesses
 
         for generation in range(self.generations):
             # Track statistics
@@ -259,15 +279,16 @@ class GeneticAlgorithm:
             fitness_history.append(avg_fitness)
             best_penalty_history.append(best_penalty)
 
-            if generation % 10 == 0:
-                print(
-                    f"Generation {generation}: Best Fitness = {best_fitness:.4f}, "
-                    f"Best Penalty = {best_penalty:.2f}, Avg Fitness = {avg_fitness:.4f}"
+            if ProgressTracker.should_report_progress(generation, self.generations):
+                AlgorithmOutputFormatter.print_generation_progress(
+                    generation, best_penalty, avg_fitness
                 )
 
             # Early stopping if we find a perfect solution
             if best_penalty == 0:
-                print(f"Perfect solution found at generation {generation}!")
+                AlgorithmOutputFormatter.print_perfect_solution(
+                    generation, "generation"
+                )
                 break
 
             # Create next generation
@@ -312,42 +333,52 @@ class GeneticAlgorithm:
         best_individual = population[best_index]
         final_penalty = self.get_penalty(best_individual)
 
-        print("\nGenetic Algorithm completed!")
-        print(f"Best solution penalty: {final_penalty}")
-        print(f"Best solution fitness: {fitnesses[best_index]:.4f}")
-        print(f"Cache hits: {len(self._fitness_cache)} fitness evaluations cached")
+        # Print completion summary
+        results_dict = {
+            "iterations": self.generations,
+            "best_penalty": final_penalty,
+            "cache_efficiency": len(self._fitness_cache),
+            "best_state": best_individual,
+            "initial_penalty": initial_penalty,
+            "fitness_history": fitness_history,
+            "penalty_history": best_penalty_history,
+        }
+        AlgorithmOutputFormatter.print_algorithm_completion(
+            "Genetic Algorithm", results_dict, initial_penalty
+        )
 
-        # Plot the objective value (penalty) progression
-        fig = self.plot_objective_progression(best_penalty_history, show=show_plot)
+        return best_individual, results_dict
 
-        return best_individual, fitness_history, fig
-
-    def plot_objective_progression(self, penalty_history: List[float], show: bool = True):
+    def plot_results(self, results: Dict, show: bool = True):
         """
-        Plot the progression of the objective value (penalty) over generations.
+        Plot optimization results. Set show=False when using with GUI to prevent popup windows.
 
         Args:
-            penalty_history: List of best penalty values for each generation
+            results: Dictionary containing optimization results
             show: If True, display plot in interactive window
         """
+        penalty_history = results.get("penalty_history", [])
         # Use Figure directly for GUI (thread-safe), plt.figure() for CLI (interactive)
         if show:
             # CLI mode: use plt.figure() for interactive display
-            fig, ax = plt.subplots(figsize=(12, 7), facecolor='white')
+            fig, ax = plt.subplots(figsize=(12, 7), facecolor="white")
         else:
             # GUI mode: use Figure directly to avoid threading issues
             from matplotlib.figure import Figure
-            fig = Figure(figsize=(12, 7), facecolor='white')
+
+            fig = Figure(figsize=(12, 7), facecolor="white")
             ax = fig.add_subplot(111)
-        
-        ax.set_facecolor('white')  # White plot area background
-        
+
+        ax.set_facecolor("white")  # White plot area background
+
         ax.plot(range(len(penalty_history)), penalty_history, "b-", linewidth=2.5)
         ax.set_title(
-            "Genetic Algorithm - Objective Value (Penalty) Progression", fontsize=16, fontweight='bold'
+            "Genetic Algorithm - Objective Value (Penalty) Progression",
+            fontsize=16,
+            fontweight="bold",
         )
-        ax.set_xlabel("Generation", fontsize=14, fontweight='bold')
-        ax.set_ylabel("Best Penalty Score", fontsize=14, fontweight='bold')
+        ax.set_xlabel("Generation", fontsize=14, fontweight="bold")
+        ax.set_ylabel("Best Penalty Score", fontsize=14, fontweight="bold")
         ax.tick_params(labelsize=11)
         ax.grid(True, alpha=0.3)
         fig.tight_layout()
@@ -372,15 +403,16 @@ class GeneticAlgorithm:
 
         if show:
             plt.show()
-        
+
         return fig
 
 
 def run_genetic_algorithm(
     classes: Dict[str, CourseClass],
     rooms: Dict[str, Room],
-    population_size: int = 20,
+    population_size: int = 32,
     generations: int = 100,
+    show_plot: bool = False,
 ) -> State:
     """
     Convenience function to run genetic algorithm with default parameters.
@@ -390,6 +422,7 @@ def run_genetic_algorithm(
         rooms: Dictionary of rooms
         population_size: Size of population
         generations: Number of generations
+        show_plot: Whether to display plots
 
     Returns:
         Best schedule found
@@ -414,7 +447,11 @@ def run_genetic_algorithm(
     try:
         ga = GeneticAlgorithm(population_size=population_size, generations=generations)
 
-        best_schedule, fitness_history, fig = ga.optimize(classes, rooms, show_plot=True)
+        best_schedule, results = ga.optimize(classes, rooms)
+
+        if show_plot:
+            ga.plot_results(results, show=True)
+
         return best_schedule
     except Exception as e:
         raise RuntimeError(f"Genetic algorithm failed: {str(e)}") from e
