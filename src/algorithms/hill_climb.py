@@ -71,8 +71,8 @@ class HillClimbing:
             results["sideways_moves_taken"] = sideways_moves_taken
             results["history"] = history
         elif variant == "random_restart":
-            max_restarts = kwargs.get("max_restarts", 10)
-            restart_variant = kwargs.get("restart_variant", "steepest_ascent")
+            max_restarts = kwargs.pop("max_restarts", 10)
+            restart_variant = kwargs.pop("restart_variant", "steepest_ascent")
             best_state, history, iterations_per_restart = self._random_restart_hc(
                 max_iterations, max_restarts, restart_variant, **kwargs
             )
@@ -106,8 +106,7 @@ class HillClimbing:
         title = f"{variant.replace('_', ' ').title()} Optimization"
         history = results.get("history", [])
 
-        # For random_restart, the history is of best values per restart, so x-axis is restarts
-        xlabel = "Restarts" if variant == "random_restart" else "Iterations"
+        xlabel = "Iterations"
 
         # Use Figure directly for GUI (thread-safe), plt.figure() for CLI (interactive)
         if show:
@@ -319,7 +318,7 @@ class HillClimbing:
     ):
         best_state_overall = None
         best_value_overall = float("inf")
-        history_overall = []
+        best_history_so_far = []  # Will store the history of the best run
         iterations_per_restart = []
 
         for i in range(max_restarts):
@@ -349,6 +348,7 @@ class HillClimbing:
             if current_best_value < best_value_overall:
                 best_state_overall = copy.deepcopy(best_state)
                 best_value_overall = current_best_value
+                best_history_so_far = history  # Save the history of the best run
                 # Print progress on overall improvement
                 AlgorithmOutputFormatter.print_progress(
                     i + 1, best_value_overall, f"New best from restart {i + 1}!"
@@ -359,6 +359,4 @@ class HillClimbing:
                     AlgorithmOutputFormatter.print_perfect_solution(i + 1, "restart")
                     break
 
-            history_overall.append(current_best_value)  # Track best of each restart
-
-        return best_state_overall, history_overall, iterations_per_restart
+        return best_state_overall, best_history_so_far, iterations_per_restart
